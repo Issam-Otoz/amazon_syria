@@ -1,0 +1,46 @@
+name: amazon_syria
+description: "Amazon Lite - A marketplace app for Syria"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # Firebase
+  firebase_core: ^3.12.1
+  firebase_auth: ^5.5.1
+  cloud_firestore: ^5.6.5
+  firebase_storage: ^12.4.4
+
+  # Routing
+  go_router: ^14.8.1
+
+  # DI
+  get_it: ^8.0.3
+
+  # State Management
+  provider: ^6.1.2
+
+  # Google Ads
+  google_mobile_ads: ^5.3.0
+
+  # Utils
+  cached_network_image: ^3.4.1
+  image_picker: ^1.1.2
+  intl: ^0.19.0
+  uuid: ^4.5.1
+  timeago: ^3.7.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
