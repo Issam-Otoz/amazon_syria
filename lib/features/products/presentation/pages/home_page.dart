@@ -8,6 +8,7 @@ import 'package:amazon_syria/core/widgets/app_error_widget.dart';
 import 'package:amazon_syria/core/widgets/loading_widget.dart';
 import 'package:amazon_syria/features/auth/presentation/providers/auth_provider.dart';
 import 'package:amazon_syria/features/products/presentation/providers/product_provider.dart';
+import 'package:amazon_syria/core/widgets/banner_ad_widget.dart';
 import 'package:amazon_syria/features/products/presentation/widgets/product_card.dart';
 
 class HomePage extends StatefulWidget {
@@ -75,6 +76,7 @@ class _HomePageState extends State<HomePage> {
             _buildSearchBar(),
             _buildSortChips(productProvider),
             if (isSupplier) _buildViewToggle(),
+            const BannerAdWidget(),
             Expanded(
               child: _buildProductsBody(productProvider, isSupplier),
             ),
