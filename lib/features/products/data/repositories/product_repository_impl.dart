@@ -1,7 +1,4 @@
-import 'dart:typed_data';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 
 import 'package:amazon_syria/features/products/domain/entities/product_entity.dart';
 import 'package:amazon_syria/features/products/domain/repositories/product_repository.dart';
@@ -9,7 +6,6 @@ import 'package:amazon_syria/features/products/data/models/product_model.dart';
 
 class ProductRepositoryImpl implements ProductRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   CollectionReference<Map<String, dynamic>> get _collection =>
       _firestore.collection('products');
@@ -64,15 +60,6 @@ class ProductRepositoryImpl implements ProductRepository {
 
   @override
   Future<void> deleteProduct(String productId) async {
-    final doc = await _collection.doc(productId).get();
-    if (doc.exists) {
-      final imageUrl = doc.data()?['imageUrl'] as String?;
-      if (imageUrl != null && imageUrl.isNotEmpty) {
-        try {
-          await _storage.refFromURL(imageUrl).delete();
-        } catch (_) {}
-      }
-    }
     await _collection.doc(productId).delete();
   }
 
@@ -86,13 +73,5 @@ class ProductRepositoryImpl implements ProductRepository {
     return snapshot.docs
         .map((doc) => ProductModel.fromMap(doc.data(), doc.id))
         .toList();
-  }
-
-  @override
-  Future<String> uploadImage(Uint8List imageData, String fileName) async {
-    final ref = _storage.ref().child('product_images/$fileName');
-    final metadata = SettableMetadata(contentType: 'image/jpeg');
-    await ref.putData(imageData, metadata);
-    return await ref.getDownloadURL();
   }
 }

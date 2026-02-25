@@ -1,10 +1,8 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:amazon_syria/core/theme/app_theme.dart';
 import 'package:amazon_syria/features/auth/presentation/providers/auth_provider.dart';
@@ -23,51 +21,29 @@ class _AddProductPageState extends State<AddProductPage> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
+  final _imageUrlController = TextEditingController();
 
-  Uint8List? _imageBytes;
-  String? _imageName;
   bool _isSubmitting = false;
+  bool _isValidImageUrl = false;
 
   @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
     _priceController.dispose();
+    _imageUrlController.dispose();
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(
-      source: ImageSource.gallery,
-      maxWidth: 1200,
-      maxHeight: 1200,
-      imageQuality: 85,
-    );
-
-    if (picked != null) {
-      final bytes = await picked.readAsBytes();
-      setState(() {
-        _imageBytes = bytes;
-        _imageName = picked.name;
-      });
+  void _onImageUrlChanged(String url) {
+    final isValid = url.startsWith('http://') || url.startsWith('https://');
+    if (isValid != _isValidImageUrl) {
+      setState(() => _isValidImageUrl = isValid);
     }
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-
-    if (_imageBytes == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'الرجاء اختيار صورة للمنتج',
-            style: TextStyle(fontFamily: 'Tajawal'),
-          ),
-        ),
-      );
-      return;
-    }
 
     setState(() => _isSubmitting = true);
 
@@ -75,17 +51,12 @@ class _AddProductPageState extends State<AddProductPage> {
       final user = context.read<AuthProvider>().currentUser!;
       final productProvider = context.read<ProductProvider>();
 
-      final productId = const Uuid().v4();
-      final fileName = '${productId}_$_imageName';
-      final imageUrl =
-          await productProvider.uploadImage(_imageBytes!, fileName);
-
       final product = ProductEntity(
-        id: productId,
+        id: const Uuid().v4(),
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         price: _priceController.text.trim(),
-        imageUrl: imageUrl,
+        imageUrl: _imageUrlController.text.trim(),
         supplierId: user.id,
         supplierName: user.name,
         createdAt: DateTime.now(),
@@ -138,7 +109,7 @@ class _AddProductPageState extends State<AddProductPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildImagePicker(),
+                _buildImageUrlSection(),
                 const SizedBox(height: 24),
                 _buildTextField(
                   controller: _titleController,
@@ -200,66 +171,92 @@ class _AddProductPageState extends State<AddProductPage> {
     );
   }
 
-  Widget _buildImagePicker() {
-    return GestureDetector(
-      onTap: _pickImage,
-      child: Container(
-        height: 220,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Colors.grey.shade300,
-            width: 1.5,
-            style: BorderStyle.solid,
+  Widget _buildImageUrlSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextFormField(
+          controller: _imageUrlController,
+          textDirection: TextDirection.ltr,
+          onChanged: _onImageUrlChanged,
+          style: const TextStyle(fontFamily: 'Tajawal', fontSize: 14),
+          validator: (v) {
+            if (v == null || v.trim().isEmpty) return 'رابط الصورة مطلوب';
+            if (!v.startsWith('http://') && !v.startsWith('https://')) {
+              return 'الرجاء إدخال رابط صحيح يبدأ بـ http';
+            }
+            return null;
+          },
+          decoration: const InputDecoration(
+            labelText: 'رابط صورة المنتج',
+            hintText: 'https://example.com/image.jpg',
+            hintTextDirection: TextDirection.ltr,
+            prefixIcon: Icon(Icons.link),
           ),
         ),
-        clipBehavior: Clip.antiAlias,
-        child: _imageBytes != null
-            ? Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.memory(_imageBytes!, fit: BoxFit.cover),
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      color: Colors.black54,
-                      child: const Text(
-                        'اضغط لتغيير الصورة',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontFamily: 'Tajawal',
-                          color: Colors.white,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              )
-            : Column(
+        const SizedBox(height: 12),
+        if (_isValidImageUrl)
+          Container(
+            height: 200,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: CachedNetworkImage(
+              imageUrl: _imageUrlController.text.trim(),
+              fit: BoxFit.cover,
+              width: double.infinity,
+              placeholder: (_, _) => const Center(
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              errorWidget: (_, _, _) => Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.add_photo_alternate_outlined,
-                    size: 56,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.7),
-                  ),
-                  const SizedBox(height: 12),
+                  Icon(Icons.broken_image_outlined,
+                      size: 48, color: Colors.grey.shade400),
+                  const SizedBox(height: 8),
                   Text(
-                    'اضغط لاختيار صورة المنتج',
+                    'لا يمكن تحميل الصورة',
                     style: TextStyle(
                       fontFamily: 'Tajawal',
-                      fontSize: 15,
                       color: Colors.grey.shade600,
                     ),
                   ),
                 ],
               ),
-      ),
+            ),
+          )
+        else
+          Container(
+            height: 200,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.add_photo_alternate_outlined,
+                  size: 56,
+                  color: AppTheme.primaryColor.withValues(alpha: 0.7),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'أدخل رابط الصورة أعلاه لمعاينتها',
+                  style: TextStyle(
+                    fontFamily: 'Tajawal',
+                    fontSize: 15,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 

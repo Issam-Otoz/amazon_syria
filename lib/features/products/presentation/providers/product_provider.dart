@@ -132,10 +132,6 @@ class ProductProvider extends ChangeNotifier {
     }
   }
 
-  Future<String> uploadImage(Uint8List imageData, String fileName) async {
-    return await _repository.uploadImage(imageData, fileName);
-  }
-
   Future<void> refreshProducts() async {
     _searchQuery = '';
     await loadProducts();

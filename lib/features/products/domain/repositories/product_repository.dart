@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:amazon_syria/features/products/domain/entities/product_entity.dart';
 
 abstract class ProductRepository {
@@ -18,6 +16,4 @@ abstract class ProductRepository {
   Future<void> deleteProduct(String productId);
 
   Future<List<ProductEntity>> getSupplierProducts(String supplierId);
-
-  Future<String> uploadImage(Uint8List imageData, String fileName);
 }
