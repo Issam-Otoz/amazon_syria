@@ -76,14 +76,17 @@ class _AddProductPageState extends State<AddProductPage> {
         );
         context.go('/');
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('Add product error: $e');
+      debugPrint('Stack trace: $stackTrace');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'حدث خطأ أثناء إضافة المنتج',
-              style: TextStyle(fontFamily: 'Tajawal'),
+              'خطأ: $e',
+              style: const TextStyle(fontFamily: 'Tajawal'),
             ),
+            duration: const Duration(seconds: 10),
           ),
         );
       }

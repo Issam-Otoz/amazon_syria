@@ -17,12 +17,12 @@ class ChatRepositoryImpl implements ChatRepository {
         .where('participantIds', arrayContains: userId)
         .orderBy('lastMessageTime', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) {
-              return ChatRoomModel.fromMap(
-                doc.data() as Map<String, dynamic>,
-                doc.id,
-              );
-            }).toList());
+        .map((snapshot) => List<ChatRoomEntity>.from(
+              snapshot.docs.map((doc) => ChatRoomModel.fromMap(
+                    doc.data() as Map<String, dynamic>,
+                    doc.id,
+                  )),
+            ));
   }
 
   @override
@@ -32,12 +32,12 @@ class ChatRepositoryImpl implements ChatRepository {
         .collection('messages')
         .orderBy('createdAt', descending: false)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) {
-              return MessageModel.fromMap(
-                doc.data(),
-                doc.id,
-              );
-            }).toList());
+        .map((snapshot) => List<MessageEntity>.from(
+              snapshot.docs.map((doc) => MessageModel.fromMap(
+                    doc.data(),
+                    doc.id,
+                  )),
+            ));
   }
 
   @override

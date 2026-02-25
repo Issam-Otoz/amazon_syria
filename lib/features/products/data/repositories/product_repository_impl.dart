@@ -38,9 +38,9 @@ class ProductRepositoryImpl implements ProductRepository {
     query = query.limit(limit);
 
     final snapshot = await query.get();
-    return snapshot.docs
-        .map((doc) => ProductModel.fromMap(doc.data(), doc.id))
-        .toList();
+    return List<ProductEntity>.from(
+      snapshot.docs.map((doc) => ProductModel.fromMap(doc.data(), doc.id)),
+    );
   }
 
   @override
@@ -70,8 +70,8 @@ class ProductRepositoryImpl implements ProductRepository {
         .orderBy('createdAt', descending: true)
         .get();
 
-    return snapshot.docs
-        .map((doc) => ProductModel.fromMap(doc.data(), doc.id))
-        .toList();
+    return List<ProductEntity>.from(
+      snapshot.docs.map((doc) => ProductModel.fromMap(doc.data(), doc.id)),
+    );
   }
 }
